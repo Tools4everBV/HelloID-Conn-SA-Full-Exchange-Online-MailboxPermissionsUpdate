@@ -43,22 +43,12 @@ The PowerShell script "createform.ps1" contains a complete PowerShell script usi
 - [ ] Exchange Online PowerShell V2 module
   This HelloID Service Automation Delegated Form uses the [Exchange Online PowerShell V2 module](https://docs.microsoft.com/en-us/powershell/exchange/exchange-online-powershell-v2?view=exchange-ps)
 
-
-
 ### Post-setup configuration
 | Variable name                 | Description               | Example value     |
 | ----------------------------- | ------------------------- | ----------------- |
 | ExchangeOnlineAdminUsername   |Exchange admin account     | user@domain.com   |
 | ExchangeOnlineAdminPassword   | Exchange admin password   | ********          |
 
-## Post-setup configuration
-After the all-in-one PowerShell script has run and created all the required resources. The following items need to be configured according to your own environment
- 1. Update the following [user defined variables](https://docs.helloid.com/hc/en-us/articles/360014169933-How-to-Create-and-Manage-User-Defined-Variables)
-<table>
-  <tr><td><strong>Variable name</strong></td><td><strong>Example value</strong></td><td><strong>Description</strong></td></tr>
-  <tr><td>ExchangeOnlineAdminUsername</td><td>user@domain.com</td><td>Exchange admin account</td></tr>
-  <tr><td>ExchangeOnlineAdminPassword</td><td>********</td><td>Exchange admin password</td></tr>
-</table>
 
 ## Manual resources
 This Delegated Form uses the following resources in order to run
