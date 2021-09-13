@@ -1,4 +1,3 @@
-# HelloID-Conn-SA-Source-HelloID-SelfserviceProducts
 <!-- Version -->
 ## Version
 Version 1.0.0.
