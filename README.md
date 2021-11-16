@@ -1,8 +1,3 @@
-<!-- Version -->
-## Version
-Version 1.0.0.
-> __This is the initial version, please let us know about any bugs/features!__
-
 <!-- Description -->
 ## Description
 This HelloID Service Automation Delegated Form provides Exchange Online (Office365) mailbox functionality. The following steps will be performed:
@@ -11,6 +6,12 @@ This HelloID Service Automation Delegated Form provides Exchange Online (Office3
  3. Modify users with permissions
  4. After confirmation the updates are processed (add or remove premissions)
  
+## Versioning
+| Version | Description | Date |
+| - | - | - |
+| 1.0.1   | Added version number and updated all-in-one script | 2021/11/16  |
+| 1.0.0   | Initial release | 2021/04/29  |
+
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 - [HelloID-Conn-SA-Source-HelloID-SelfserviceProducts](#helloid-conn-sa-source-helloid-selfserviceproducts)
@@ -67,5 +68,8 @@ This delegated form task will create the shared mailbox in Exchange.
 # HelloID Docs
 The official HelloID documentation can be found at: https://docs.helloid.com/
 
-# Forum Thread
-The Forum thread for any questions or remarks regarding this connector can be found at: https://forum.helloid.com/forum/helloid-connectors/service-automation/290-helloid-sa-exchange-online-update-user
+## Getting help
+_If you need help, feel free to ask questions on our [forum](https://forum.helloid.com/forum/helloid-connectors/service-automation/290-helloid-sa-exchange-online-update-mailbox-permissions)_
+
+## HelloID Docs
+The official HelloID documentation can be found at: https://docs.helloid.com/
