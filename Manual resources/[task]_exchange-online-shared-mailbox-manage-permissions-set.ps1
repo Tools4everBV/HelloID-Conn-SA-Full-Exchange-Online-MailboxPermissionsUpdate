@@ -7,7 +7,7 @@ try {
 
     # Connect to Office 365
     try{
-        Hid-Write-Status -Event Information -Message "Connecting to Office 365.."
+        Write-Information -Message "Connecting to Office 365.."
 
         $module = Import-Module ExchangeOnlineManagement
 
@@ -16,12 +16,24 @@ try {
 
         $exchangeSession = Connect-ExchangeOnline -Credential $credential -ShowBanner:$false -ShowProgress:$false -TrackPerformance:$false -ErrorAction Stop 
 
-        Hid-Write-Status -Event Information -Message "Successfully connected to Office 365"
+        Write-Information -Message "Successfully connected to Office 365"
+
+        $Log = @{
+            Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+            System            = "ExchangeOnline" # optional (free format text) 
+            Message           = "Successfully connected to Office 365" # required (free format text) 
+            IsError           = $false # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+            TargetDisplayName = "" # optional (free format text) 
+            TargetIdentifier  = "" # optional (free format text) 
+        }
+        #send result back  
+        Write-Information -Tags "Audit" -MessageData $log
+
     }catch{
         Write-Error "Could not connect to Exchange Online, error: $_"
     }
 
-    Hid-Write-Status -Event Information -Message "Checking if mailbox with identity '$($identity)' exists"
+    Write-Information -Message "Checking if mailbox with identity '$($identity)' exists"
     $mailbox = Get-Mailbox -Identity $identity -ErrorAction Stop
     if ($mailbox.Name.Count -eq 0) {
         throw "Could not find mailbox with identity '$($identity)'"
@@ -29,7 +41,7 @@ try {
 
     # Add permissions to users
     try { 
-        HID-Write-Status -Event Information -Message "Adding permission $($permission) to mailbox $($identity) for $usersToAdd" 
+        Write-Information -Message "Adding permission $($permission) to mailbox $($identity) for $usersToAdd" 
         $usersToAddJson = $usersToAdd | ConvertFrom-Json
         foreach ($user in $usersToAddJson.id) {
             if($permission.ToLower() -eq "fullaccess"){
@@ -45,17 +57,37 @@ try {
             }else{
                 throw "Could not match right '$($permission)' to FullAccess, SendAs or SendOnBehalf"
             }
-            HID-Write-Status -Event Success -Message "Added permission $($permission) to mailbox $($identity) for $User."
-            HID-Write-Summary -Event Success -Message "Added permission $($permission) to mailbox $($identity) for $User."
+            Write-Information -Message "Added permission $($permission) to mailbox $($identity) for $User."
+
+            $Log = @{
+                Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+                System            = "ExchangeOnline" # optional (free format text) 
+                Message           = "Added permission $($permission) to mailbox $($identity) for $User." # required (free format text) 
+                IsError           = $false # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+                TargetDisplayName = $User # optional (free format text) 
+                TargetIdentifier  = $identity # optional (free format text) 
+            }
+            #send result back  
+            Write-Information -Tags "Audit" -MessageData $log
         }
     } catch {
-        HID-Write-Status -Event Error -Message "Error adding permission $($permission) to mailbox $($identity) for $User. Error: $_"
-        HID-Write-Summary -Event Failed -Message "Error adding permission $($permission) to mailbox $($identity) for $User."
+        Write-Error -Message "Error adding permission $($permission) to mailbox $($identity) for $User. Error: $_"
+        
+        $Log = @{
+            Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+            System            = "ExchangeOnline" # optional (free format text) 
+            Message           = "Error adding permission $($permission) to mailbox $($identity) for $User." # required (free format text) 
+            IsError           = $true # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+            TargetDisplayName = $User # optional (free format text) 
+            TargetIdentifier  = $identity # optional (free format text) 
+        }
+        #send result back  
+        Write-Information -Tags "Audit" -MessageData $log
     }
 
     # Remove permissions from users
     try { 
-        HID-Write-Status -Event Information -Message "Removing permission $($permission) to mailbox $($identity) for $usersToRemove" 
+        Write-Information -Message "Removing permission $($permission) to mailbox $($identity) for $usersToRemove" 
         $usersToRemoveJson = $usersToRemove | ConvertFrom-Json
         foreach ($user in $usersToRemoveJson.id) {
             if($permission.ToLower() -eq "fullaccess"){
@@ -67,18 +99,58 @@ try {
             }else{
                 throw "Could not match right '$($permission)' to FullAccess, SendAs or SendOnBehalf"
             }
-            HID-Write-Status -Event Success -Message "Removed permission $($permission) to mailbox $($identity) for $User."
-            HID-Write-Summary -Event Success -Message "Removed permission $($permission) to mailbox $($identity) for $User."          
+            Write-Information -Message "Removed permission $($permission) to mailbox $($identity) for $User."
+            
+            $Log = @{
+                Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+                System            = "ExchangeOnline" # optional (free format text) 
+                Message           = "Removed permission $($permission) to mailbox $($identity) for $User." # required (free format text) 
+                IsError           = $false # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+                TargetDisplayName = $User # optional (free format text) 
+                TargetIdentifier  = $identity # optional (free format text) 
+            }
+            #send result back  
+            Write-Information -Tags "Audit" -MessageData $log         
         }
     } catch {
-        HID-Write-Status -Event Error -Message "Error removing permission $($permission) to mailbox $($identity) for $User. Error: $_"
-        HID-Write-Summary -Event Failed -Message "Error removing permission $($permission) to mailbox $($identity) for $User."
+        Write-Error -Message "Error removing permission $($permission) to mailbox $($identity) for $User. Error: $_"
+
+        $Log = @{
+            Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+            System            = "ExchangeOnline" # optional (free format text) 
+            Message           = "Error removing permission $($permission) to mailbox $($identity) for $User." # required (free format text) 
+            IsError           = $true # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+            TargetDisplayName = $User # optional (free format text) 
+            TargetIdentifier  = $identity # optional (free format text) 
+        }
+        #send result back  
+        Write-Information -Tags "Audit" -MessageData $log
     }
 } catch {
-    HID-Write-Status -Message "Error updating permission $($permission) to mailbox $($identity). Error: $_" -Event Error
-    HID-Write-Summary -Message "Error updating permission $($permission) to mailbox $($identity)." -Event Failed
+    Write-Error -Message "Error updating permission $($permission) to mailbox $($identity). Error: $_"
+    
+    $Log = @{
+        Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+        System            = "ExchangeOnline" # optional (free format text) 
+        Message           = "Error updating permission $($permission) to mailbox $($identity)." # required (free format text) 
+        IsError           = $true # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+        TargetDisplayName = "" # optional (free format text) 
+        TargetIdentifier  = $identity # optional (free format text) 
+    }
+    #send result back  
+    Write-Information -Tags "Audit" -MessageData $log
 } finally {
-    Hid-Write-Status -Event Information -Message "Disconnecting from Office 365.."
+    Write-Information -Message "Disconnecting from Office 365.."
     $exchangeSessionEnd = Disconnect-ExchangeOnline -Confirm:$false -Verbose:$false -ErrorAction Stop
-    Hid-Write-Status -Event Information -Message "Successfully disconnected from Office 365"
+    
+    $Log = @{
+        Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+        System            = "ExchangeOnline" # optional (free format text) 
+        Message           = "Successfully Disconnecting from Office 365" # required (free format text) 
+        IsError           = $false # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+        TargetDisplayName = "" # optional (free format text) 
+        TargetIdentifier  = "" # optional (free format text) 
+    }
+    #send result back  
+    Write-Information -Tags "Audit" -MessageData $log
 }
