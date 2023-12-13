@@ -630,17 +630,6 @@ try {
 
         Write-Information -Message "Successfully connected to Office 365"
 
-        $Log = @{
-            Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
-            System            = "ExchangeOnline" # optional (free format text) 
-            Message           = "Successfully connected to Office 365" # required (free format text) 
-            IsError           = $false # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
-            TargetDisplayName = "" # optional (free format text) 
-            TargetIdentifier  = "" # optional (free format text) 
-        }
-        #send result back  
-        Write-Information -Tags "Audit" -MessageData $log
-
     }catch{
         Write-Error "Could not connect to Exchange Online, error: $_"
     }
@@ -672,7 +661,7 @@ try {
             Write-Information -Message "Added permission $($permission) to mailbox $($identity) for $User."
 
             $Log = @{
-                Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+                Action            = "UpdateAccount" # optional. ENUM (undefined = default) 
                 System            = "ExchangeOnline" # optional (free format text) 
                 Message           = "Added permission $($permission) to mailbox $($identity) for $User." # required (free format text) 
                 IsError           = $false # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
@@ -686,7 +675,7 @@ try {
         Write-Error -Message "Error adding permission $($permission) to mailbox $($identity) for $User. Error: $_"
         
         $Log = @{
-            Action            = "MailboxPermissions" # optional. ENUM (undefined = default) 
+            Action            = "UpdateAccount" # optional. ENUM (undefined = default) 
             System            = "ExchangeOnline" # optional (free format text) 
             Message           = "Error adding permission $($permission) to mailbox $($identity) for $User." # required (free format text) 
             IsError           = $true # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
