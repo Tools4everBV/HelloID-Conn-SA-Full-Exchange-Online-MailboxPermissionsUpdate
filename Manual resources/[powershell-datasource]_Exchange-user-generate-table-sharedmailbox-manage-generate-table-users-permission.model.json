@@ -1,6 +1,10 @@
 [
     {
-        "key":  "name",
+        "key":  "displayValue",
+        "type":  0
+    },
+    {
+        "key":  "userPrincipalName",
         "type":  0
     },
     {
@@ -8,7 +12,7 @@
         "type":  0
     },
     {
-        "key":  "UserPrincipalName",
+        "key":  "guid",
         "type":  0
     }
 ]

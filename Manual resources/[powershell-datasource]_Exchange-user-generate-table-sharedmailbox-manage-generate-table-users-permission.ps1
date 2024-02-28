@@ -1,25 +1,150 @@
 $identity = $datasource.selectedmailbox.id
 $Permission = $datasource.Permission
 
+# PowerShell commands to import
+$commands = @(
+    "Get-Mailbox"
+    , "Get-EXOMailbox"
+    , "Get-RecipientPermission"
+    , "Get-MailboxPermission"
+)
+
 # Set TLS to accept TLS, TLS 1.1 and TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
 
-# Connect to Office 365
-try {
-    Write-Information "Connecting to Office 365.."
+$VerbosePreference = "SilentlyContinue"
+$InformationPreference = "Continue"
+$WarningPreference = "Continue"
 
-    $module = Import-Module ExchangeOnlineManagement
+#region functions
+function Resolve-HTTPError {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory,
+            ValueFromPipeline
+        )]
+        [object]$ErrorObject
+    )
+    process {
+        $httpErrorObj = [PSCustomObject]@{
+            FullyQualifiedErrorId = $ErrorObject.FullyQualifiedErrorId
+            MyCommand             = $ErrorObject.InvocationInfo.MyCommand
+            RequestUri            = $ErrorObject.TargetObject.RequestUri
+            ScriptStackTrace      = $ErrorObject.ScriptStackTrace
+            ErrorMessage          = ''
+        }
 
-    $securePassword = ConvertTo-SecureString $ExchangeOnlineAdminPassword -AsPlainText -Force
-    $credential = [System.Management.Automation.PSCredential]::new($ExchangeOnlineAdminUsername,$securePassword)
+        if ($ErrorObject.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') {
+            # $httpErrorObj.ErrorMessage = $ErrorObject.ErrorDetails.Message # Does not show the correct error message for the Raet IAM API calls
+            $httpErrorObj.ErrorMessage = $ErrorObject.Exception.Message
 
-    $exchangeSession = Connect-ExchangeOnline -Credential $credential -ShowBanner:$false -ShowProgress:$false -TrackPerformance:$false -ErrorAction Stop 
+        }
+        elseif ($ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException') {
+            $httpErrorObj.ErrorMessage = [HelloID.StreamReader]::new($ErrorObject.Exception.Response.GetResponseStream()).ReadToEnd()
+        }
 
-    Write-Information "Successfully connected to Office 365"
+        Write-Output $httpErrorObj
+    }
+}
+
+function Get-ErrorMessage {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory,
+            ValueFromPipeline
+        )]
+        [object]$ErrorObject
+    )
+    process {
+        $errorMessage = [PSCustomObject]@{
+            VerboseErrorMessage = $null
+            AuditErrorMessage   = $null
+        }
+
+        if ( $($ErrorObject.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or $($ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException')) {
+            $httpErrorObject = Resolve-HTTPError -Error $ErrorObject
+
+            $errorMessage.VerboseErrorMessage = $httpErrorObject.ErrorMessage
+
+            $errorMessage.AuditErrorMessage = $httpErrorObject.ErrorMessage
+        }
+
+        # If error message empty, fall back on $ex.Exception.Message
+        if ([String]::IsNullOrEmpty($errorMessage.VerboseErrorMessage)) {
+            $errorMessage.VerboseErrorMessage = $ErrorObject.Exception.Message
+        }
+        if ([String]::IsNullOrEmpty($errorMessage.AuditErrorMessage)) {
+            $errorMessage.AuditErrorMessage = $ErrorObject.Exception.Message
+        }
+
+        Write-Output $errorMessage
+    }
+}
+#endregion functions
+
+#region Import module
+try {           
+    $moduleName = "ExchangeOnlineManagement"
+
+    # If module is imported say that and do nothing
+    if (Get-Module -Verbose:$false | Where-Object { $_.Name -eq $ModuleName }) {
+        Write-Verbose "Module [$ModuleName] is already imported."
+    }
+    else {
+        # If module is not imported, but available on disk then import
+        if (Get-Module -ListAvailable -Verbose:$false | Where-Object { $_.Name -eq $ModuleName }) {
+            $module = Import-Module $ModuleName -Cmdlet $commands -Verbose:$false
+            Write-Verbose "Imported module [$ModuleName]"
+        }
+        else {
+            # If the module is not imported, not available and not in the online gallery then abort
+            throw "Module [$ModuleName] is not available. Please install the module using: Install-Module -Name [$ModuleName] -Force"
+        }
+    }
 }
 catch {
-    Write-Error "Could not connect to Exchange Online, error: $_"
+    $ex = $PSItem
+    $errorMessage = Get-ErrorMessage -ErrorObject $ex
+
+    Write-Verbose "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($errorMessage.VerboseErrorMessage)"
+
+    # Skip further actions, as this is a critical error
+    throw "Error importing module [$ModuleName]. Error Message: $($errorMessage.AuditErrorMessage)"
 }
+#endregion Import module
+
+#region Connect to Exchange
+try {
+    # Create credentials object
+    Write-Verbose "Creating Credentials object"
+    $securePassword = ConvertTo-SecureString $ExchangeOnlineAdminPassword -AsPlainText -Force
+    $credential = [System.Management.Automation.PSCredential]::new($ExchangeOnlineAdminUsername, $securePassword)
+
+    # Connect to Exchange Online in an unattended scripting scenario using an access token.
+    Write-Verbose "Connecting to Exchange Online"
+
+    $exchangeSessionParams = @{
+        Credential       = $credential
+        CommandName      = $commands
+        ShowBanner       = $false
+        ShowProgress     = $false
+        TrackPerformance = $false
+        ErrorAction      = "Stop"
+    }
+    $exchangeSession = Connect-ExchangeOnline @exchangeSessionParams
+    
+    Write-Information "Successfully connected to Exchange Online"
+}
+catch {
+    $ex = $PSItem
+    $errorMessage = Get-ErrorMessage -ErrorObject $ex
+
+    Write-Verbose "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($errorMessage.VerboseErrorMessage)"
+
+    # Skip further actions, as this is a critical error
+    throw "Error connecting to Exchange Online. Error Message: $($errorMessage.AuditErrorMessage)"
+}
+#endregion Connect to Exchange
 
 # Get current mailbox permissions
 try {
@@ -36,7 +161,7 @@ try {
         $currentPermissionsUsers = $currentPermissions.Trustee
     }
     elseif ($Permission.ToLower() -eq "sendonbehalf") {
-        $exchangeMailbox = Get-Mailbox -Identity $identity -resultSize unlimited
+        $exchangeMailbox = Get-EXOMailbox -Identity $identity -resultSize unlimited
 
         $currentPermissions = $exchangeMailbox | ForEach-Object { $_.GrantSendOnBehalfTo } # Returns name only
         $currentPermissionsUsers = $currentPermissions
@@ -53,21 +178,18 @@ try {
     Write-Information -Message "Found $Permission permissions to mailbox $($identity): $(@($users).Count)"
 
     foreach ($user in $users) {
-        $displayValue = $user.displayName + " [" + $user.UserPrincipalName + "]"
+        $displayValue = $user.displayName + " [" + $user.userPrincipalName + "]"
         $returnObject = @{
-            name              = $displayValue;
-            UserPrincipalName = "$($user.UserPrincipalName)";
+            displayValue      = $displayValue;
+            userPrincipalName = "$($user.userPrincipalName)";
             id                = "$($user.id)";
+            guid              = "$($user.guid)";
         }
+
         Write-Output $returnObject
     }
 
 }
 catch {
     Write-Error "Error searching $Permissions permissions to mailbox $($identity). Error: $_"
-}
-finally {
-    Write-Information "Disconnecting from Office 365.."
-    $exchangeSessionEnd = Disconnect-ExchangeOnline -Confirm:$false -Verbose:$false -ErrorAction Stop
-    Write-Information "Successfully disconnected from Office 365"
 }
