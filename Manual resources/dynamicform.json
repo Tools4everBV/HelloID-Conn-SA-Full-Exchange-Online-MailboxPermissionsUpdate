@@ -34,19 +34,23 @@
                                                                 "columns":  [
                                                                                 {
                                                                                     "headerName":  "Name",
-                                                                                    "field":  "name"
+                                                                                    "field":  "Name"
+                                                                                },
+                                                                                {
+                                                                                    "headerName":  "Display Name",
+                                                                                    "field":  "DisplayName"
                                                                                 },
                                                                                 {
                                                                                     "headerName":  "User Principal Name",
-                                                                                    "field":  "userPrincipalName"
+                                                                                    "field":  "UserPrincipalName"
                                                                                 },
                                                                                 {
-                                                                                    "headerName":  "Primary Smtp Address",
-                                                                                    "field":  "primarySmtpAddress"
+                                                                                    "headerName":  "Email Addresses",
+                                                                                    "field":  "EmailAddresses"
                                                                                 },
                                                                                 {
-                                                                                    "headerName":  "Id",
-                                                                                    "field":  "id"
+                                                                                    "headerName":  "Alias",
+                                                                                    "field":  "Alias"
                                                                                 }
                                                                             ],
                                                                 "height":  300,
@@ -141,8 +145,8 @@
                                                                                         "Name":  "Orange"
                                                                                     }
                                                                                 ],
-                                                                    "optionKeyProperty":  "id",
-                                                                    "optionDisplayProperty":  "name"
+                                                                    "optionKeyProperty":  "guid",
+                                                                    "optionDisplayProperty":  "displayValue"
                                                                 },
                                                    "dataSourceConfig":  {
                                                                             "dataSourceGuid":  "$dataSourceGuid_1",

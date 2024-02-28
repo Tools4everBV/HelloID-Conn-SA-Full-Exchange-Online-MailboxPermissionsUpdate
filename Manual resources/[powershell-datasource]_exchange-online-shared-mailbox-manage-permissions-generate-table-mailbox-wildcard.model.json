@@ -1,18 +1,34 @@
 [
     {
-        "key":  "userPrincipalName",
+        "key":  "Id",
         "type":  0
     },
     {
-        "key":  "primarySmtpAddress",
+        "key":  "Guid",
         "type":  0
     },
     {
-        "key":  "id",
+        "key":  "Name",
         "type":  0
     },
     {
-        "key":  "name",
+        "key":  "DisplayName",
+        "type":  0
+    },
+    {
+        "key":  "UserPrincipalName",
+        "type":  0
+    },
+    {
+        "key":  "EmailAddresses",
+        "type":  0
+    },
+    {
+        "key":  "RecipientTypeDetails",
+        "type":  0
+    },
+    {
+        "key":  "Alias",
         "type":  0
     }
 ]
