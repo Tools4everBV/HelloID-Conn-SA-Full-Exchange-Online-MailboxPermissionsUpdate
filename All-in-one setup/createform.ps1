@@ -20,7 +20,6 @@ $tmpName = @'
 ExchangeOnlineAdminPassword
 '@ 
 $tmpValue = @'
-dbX9UE733DVG*Fmw7m&RR8!x
 '@ 
 $globalHelloIDVariables.Add([PSCustomObject]@{name = $tmpName; value = $tmpValue; secret = "False"});
 
@@ -29,7 +28,7 @@ $tmpName = @'
 ExchangeOnlineAdminUsername
 '@ 
 $tmpValue = @'
-exchangeadmin@schoutenenzn.onmicrosoft.com
+exchangeadmin@enyoi.onmicrosoft.com
 '@ 
 $globalHelloIDVariables.Add([PSCustomObject]@{name = $tmpName; value = $tmpValue; secret = "False"});
 
