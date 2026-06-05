@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com), and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [2.1.1] - 2026-06-05
+
+### Changed
+- Updated README to clearly document the requirement for an on-premises HelloID Service Automation agent
+  - Restructured Requirements section with numbered list format for better clarity
+  - Added explicit explanation that cloud agent does not support importing PowerShell modules
+  - Included direct link to ExchangeOnlineManagement module on PowerShell Gallery
+  - Moved HelloID-specific configuration details under App Registration & Certificate Setup section
+  - Added instructions for converting .pfx certificate to base64 string format required by HelloID
+
 ## [2.1.0] - 2026-03-09
 
 ### Added
