@@ -1,8 +1,13 @@
 # HelloID-Conn-SA-Full-Exchange-Online-MailboxPermissionsUpdate
 
-| :information_source: Information                                                                                                                                                                                                                                                                            |
-| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| This repository contains the connector and configuration code only. The implementer is responsible for acquiring the connection details such as organization name, application ID, certificate, etc. You might need to coordinate with the client's application manager before implementing this connector. |
+| :warning: Important |
+|:---|
+| **Best Practice:** Use **HelloID Products** for requesting and managing permissions (group memberships, mailbox access, application roles). Products provide governance, approval workflows, admin visibility, and full lifecycle management.<br>Use delegated forms for one-time operational actions (creating resources like shared mailboxes, password resets, attribute updates) only.<br><br>**[Read more: Products vs. Delegated Forms](https://docs.helloid.com/en/service-automation/products-vs--delegated-forms.html)** |
+
+
+| :information_source: Information |
+|:---|
+| This repository contains the connector and configuration code only. The implementer is responsible for acquiring the connection details such as username, password, certificate, etc. You might even need to sign a contract or agreement with the supplier before implementing this connector. Please contact the client's application manager to coordinate the connector requirements. |
 
 ## Description
 
@@ -12,35 +17,59 @@ By using this delegated form, you can manage shared mailbox permissions in Excha
 
 1. Search and select a shared mailbox (wildcard search by name and email addresses)
 2. Select the permission type to manage (Full Access, Send As, or Send on Behalf)
-3. Add or remove users from the selected permission via a dual list
+3. **Optional:** When selecting "Full Access", you can enable "Include Send As with Full Access" to automatically grant or revoke both permissions simultaneously (enabled by default)
+4. Add or remove users from the selected permission via a dual list
    > The left part of the dual list shows all available users  
    > The right part of the dual list shows the users who currently have the selected permission  
-4. grant or revoke the selected permission for multiple users to or from the selected mailbox
+5. Grant or revoke the selected permission(s) for multiple users to or from the selected mailbox
    > Users moved to the left part of the dual list will have their permission revoked  
    > Users moved to the right part of the dual list will have their permission granted  
 
 ## Getting started
 ### Requirements
 
-#### App Registration & Certificate Setup
+1. **HelloID _On-Premises_ Service Automation agent**  
+   For security reasons, the HelloID cloud agent does not support importing PowerShell modules. This form requires the `ExchangeOnlineManagement` module to be imported, therefore an on-premises agent is required.
 
-Before implementing this connector, make sure to configure a Microsoft Entra ID App Registration. During the setup process, you'll create a new App Registration in the Entra portal, assign the necessary API permissions, and generate and assign a certificate.
+2. **ExchangeOnlineManagement PowerShell Module**  
+   The module must be installed on the server running the HelloID agent. You can find the module here: https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.9.2
+   
+   Installation command:
+   ```powershell
+   Install-Module -Name ExchangeOnlineManagement -Force
+   ```
 
-Follow the official Microsoft documentation for creating an App Registration and setting up certificate-based authentication:
-- [App-only authentication with certificate (Exchange Online)](https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps#set-up-app-only-authentication)
+3. **App Registration & Certificate Setup**  
+   Before implementing this connector, configure a Microsoft Entra ID App Registration with certificate-based authentication.
+   
+   Follow the official Microsoft documentation:
+   - [App-only authentication with certificate (Exchange Online)](https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps#set-up-app-only-authentication)
 
-#### HelloID-specific configuration
-
-Once you have completed the Microsoft setup and followed their best practices, configure the following HelloID-specific requirements.
-
-- **API Permissions** (Application permissions):
-  - `User.Read.All` - To list all users via Graph API for the dual list
-  - `Exchange.ManageAsApp` - To manage mailbox permissions
-- **Entra ID Role assignment:**
-  - Assign the **Exchange Administrator** role to the App Registration
-- **Certificate:**
-  - Upload the public key file (.cer) in Entra ID
-  - Provide the certificate as a Base64 string in HelloID. For instructions on creating the certificate and obtaining the base64 string, refer to our forum post: [Setting up a certificate for Microsoft Graph API in HelloID connectors](https://forum.helloid.com/forum/helloid-provisioning/5338-instruction-setting-up-a-certificate-for-microsoft-graph-api-in-helloid-connectors#post5338)
+   **HelloID-specific configuration:**
+   
+   Once you have completed the Microsoft setup and followed their best practices, configure the following HelloID-specific requirements:
+   
+   - **API Permissions** (Application permissions):
+     - `User.Read.All` - To list all users via Graph API for the dual list
+     - `Exchange.ManageAsApp` - To manage mailbox permissions
+   - **Entra ID Role assignment:**
+     - Assign the **Exchange Administrator** role to the App Registration
+   - **Certificate:**
+     - Upload the public key file (.cer) in Entra ID
+     - Provide the certificate as a Base64 string in HelloID.
+     
+     **Convert .pfx to base64 string:**
+     
+     HelloID requires a base64 string to import the certificate. With the example below, it is possible to create a base64 string
+     
+     ```powershell
+     $filePath = 'C:\Cert'
+     $pfxCertName = 'Cert.pfx'
+     $pfxPath = "$filePath\$pfxCertName"
+     
+     $fileContentBytes = [System.IO.File]::ReadAllBytes("$pfxPath")
+     [System.Convert]::ToBase64String($fileContentBytes) | Set-Content "$filePath\HelloID_Cert_Base64.txt"
+     ```
 
 ### Connection settings
 
@@ -55,6 +84,21 @@ The following global variables must be configured in HelloID when importing and 
 | EntraIdCertificatePassword     | The password associated with the app certificate                         | Yes       |
 
 ## Remarks
+
+### Combined Permission Management
+
+When selecting **Full Access** as the permission type, you have the option to also include **Send As** permissions automatically. This is controlled by the "Include Send As with Full Access" checkbox (enabled by default).
+
+**Why this is useful:**
+- In most scenarios, users who need Full Access to a shared mailbox also require Send As permissions
+- This feature streamlines the permission management process by granting or revoking both permissions in a single operation
+- The checkbox only appears when "Full Access" is selected; it's hidden for other permission types
+
+**Behavior:**
+- When enabled, both Full Access and Send As permissions are granted or revoked simultaneously
+- Users moved to the right side of the dual list receive both permissions
+- Users moved to the left side of the dual list have both permissions removed
+- The checkbox can be disabled if you only want to manage Full Access without affecting Send As permissions
 
 ### Performance Optimization Strategy
 
@@ -146,8 +190,9 @@ For more information on the APIs and PowerShell cmdlets used in this connector, 
 
 ## Getting help
 
-> 💡 **Tip:**  
-> For more information on Delegated Forms, please refer to our [documentation](https://docs.helloid.com/en/service-automation/delegated-forms.html) pages.
+| :bulb: Tip |
+|:---|
+| For more information on Delegated Forms, please refer to our [documentation](https://docs.helloid.com/en/service-automation/delegated-forms.html) pages. |
 
 ## HelloID docs
 
